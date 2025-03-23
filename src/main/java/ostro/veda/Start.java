@@ -56,10 +56,10 @@ public class Start implements CommandLineRunner {
             case "2" -> createBoard();
             case "3" -> createColumn();
             case "4" -> createCard();
-            case "5" -> moveCard();
-            case "6" -> blockCard();
-            case "7" -> cancelCard();
-            case "8" -> closeBoard();
+//            case "5" -> moveCard();
+//            case "6" -> blockCard();
+//            case "7" -> cancelCard();
+//            case "8" -> closeBoard();
             case "9" -> System.out.println(boardService.getBoards());
             default -> closeApplication();
         }

@@ -13,6 +13,7 @@ import ostro.veda.model.ColumnType;
 import ostro.veda.repository.BoardRepository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,12 +37,16 @@ public class BoardServiceImpl implements BoardService {
     public BoardDto getBoardById(long id) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+        Collections.sort(board.getBoardColumns());
         return toDto(board);
     }
 
     @Override
     public List<BoardDto> getBoards() {
-        return boardRepository.findAll()
+        List<Board> boardList = boardRepository.findAll();
+
+        boardList.forEach(board -> Collections.sort(board.getBoardColumns()));
+        return boardList
                 .stream()
                 .map(this::toDto)
                 .toList();

@@ -30,9 +30,9 @@ public class BoardColumn implements Comparable<BoardColumn> {
 
         BoardColumn that = (BoardColumn) o;
         if (columnType.equals(ColumnType.START) || columnType.equals(ColumnType.CANCELED) || columnType.equals(ColumnType.FINAL)) {
-            return columnType == that.columnType;
+            return columnType.ordinal() == that.columnType.ordinal();
         }
-        return columnIndex == that.columnIndex && columnType == that.columnType;
+        return columnIndex == that.columnIndex && columnType.ordinal() == that.columnType.ordinal();
     }
 
     @Override
