@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://${DBHOST}:${DBPORT}/${DBNAME}
+    username: ${DBUSER}
+    password: ${DBPASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create
