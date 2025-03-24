@@ -31,3 +31,36 @@ Gerenciado de tarefas estilo Kanban.
 - **SLF4J**: Logs centralizados.
 
 ---
+
+### Diagram
+classDiagram
+class Board {
+<<Entity>>
+long boardId
+String boardName
+boolean isClosed
+List~BoardColumn~ boardColumns
+}
+
+    class BoardColumn {
+        <<Entity>>
+        long columnId
+        String columnName
+        ColumnType columnType
+        List~Card~ cards
+        int columnIndex
+    }
+    
+    class Card {
+        <<Entity>>
+        long cardId
+        String name
+        String description
+        boolean isBlocked
+        String blockedDescription
+        LocalDateTime blockedAt
+        LocalDateTime createdAt
+    }
+
+    Board "1" --> "many" BoardColumn : contains
+    BoardColumn "1" --> "many" Card : contains
