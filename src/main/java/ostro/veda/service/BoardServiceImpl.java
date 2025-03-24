@@ -13,7 +13,6 @@ import ostro.veda.model.ColumnType;
 import ostro.veda.repository.BoardRepository;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +27,13 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
+    public BoardDto findById(long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+        return toDto(board);
+    }
+
+    @Override
     public void createBoard(BoardDto boardDto) {
         Board board = buildBoard(boardDto);
         boardRepository.save(board);
@@ -37,16 +43,13 @@ public class BoardServiceImpl implements BoardService {
     public BoardDto getBoardById(long id) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
-        Collections.sort(board.getBoardColumns());
+//        Collections.sort(board.getBoardColumns());
         return toDto(board);
     }
 
     @Override
-    public List<BoardDto> getBoards() {
-        List<Board> boardList = boardRepository.findAll();
-
-        boardList.forEach(board -> Collections.sort(board.getBoardColumns()));
-        return boardList
+    public List<BoardDto> findAllBoards() {
+        return boardRepository.findAll()
                 .stream()
                 .map(this::toDto)
                 .toList();
@@ -56,6 +59,8 @@ public class BoardServiceImpl implements BoardService {
     public void addColumn(long boardId, BoardColumnDto boardColumnDto) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+
+        defineColumnIndex(boardColumnDto.getColumnIndex(), board.getBoardColumns());
 
         board.getBoardColumns()
                 .add(
@@ -94,6 +99,54 @@ public class BoardServiceImpl implements BoardService {
         boardRepository.save(board);
     }
 
+    @Override
+    public void moveCard(long boardId, long cardId, boolean forCancellation) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+
+        for (BoardColumn boardColumn : board.getBoardColumns()) {
+            Card card = boardColumn.getCards().stream()
+                    .filter(c -> c.getCardId() == cardId)
+                    .findFirst()
+                    .orElse(null);
+            if (card != null) {
+
+                String message = null;
+                if (
+                        boardColumn.getColumnType().equals(ColumnType.FINAL) ||
+                                boardColumn.getColumnType().equals(ColumnType.CANCELED)
+                )
+                    message = "Cards in FINAL and CANCELED column's cannot be moved";
+                else if (card.isBlocked())
+                    message = "Card is blocked and cannot be moved";
+
+                if (message != null)
+                    throw new IllegalStateException(message);
+
+                boardColumn.getCards().remove(card);
+                int index = 0;
+                if (forCancellation)
+                    index = board.getBoardColumns().size() - 1;
+                else
+                    index = board.getBoardColumns().indexOf(boardColumn);
+
+                board.getBoardColumns().get(++index).getCards().add(card);
+
+                boardRepository.save(board);
+                return;
+            }
+        }
+        throw new EntityNotFoundException("Entity not found");
+    }
+
+    @Override
+    public void closeBoard(long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+
+        board.setClosed(true);
+    }
+
     private Board buildBoard(BoardDto boardDto) {
         List<BoardColumn> boardColumnList = new ArrayList<>(
                 List.of(new BoardColumn()
@@ -115,10 +168,18 @@ public class BoardServiceImpl implements BoardService {
                 .setBoardColumns(boardColumnList);
     }
 
+    private void defineColumnIndex(int columnIndex, List<BoardColumn> boardColumnList) {
+        for (BoardColumn boardColumn : boardColumnList) {
+            int currentColumnIndex = boardColumn.getColumnIndex();
+            if (boardColumn.getColumnIndex() >= columnIndex) boardColumn.setColumnIndex(++currentColumnIndex);
+        }
+    }
+
     private BoardDto toDto(Board board) {
         return new BoardDto()
                 .setBoardId(board.getBoardId())
                 .setBoardName(board.getBoardName())
+                .setClosed(board.isClosed())
                 .setBoardColumnDtoList(
                         board.getBoardColumns().stream()
                                 .map(c ->
@@ -138,6 +199,7 @@ public class BoardServiceImpl implements BoardService {
                                                         )
                                                         .collect(Collectors.toList())
                                                 ))
+                                .sorted()
                                 .collect(Collectors.toList())
                 );
     }

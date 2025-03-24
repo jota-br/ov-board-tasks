@@ -13,4 +13,5 @@ public class BoardDto {
     private long boardId;
     private String boardName;
     private List<BoardColumnDto> boardColumnDtoList = new ArrayList<>();
+    private boolean isClosed;
 }

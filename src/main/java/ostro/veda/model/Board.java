@@ -21,5 +21,8 @@ public class Board {
     private String boardName;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OrderBy("columnIndex ASC")
     private List<BoardColumn> boardColumns = new ArrayList<>();
+
+    private boolean isClosed;
 }
